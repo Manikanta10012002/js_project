@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile Setup</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .form-container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      color: #333;
+      margin-top: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media (max-width: 480px) {
+      .form-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="form-container">
+    <h2>Create Your Profile</h2>
+    <form id="profileForm">
+      <label for="bio">Bio:</label>
+      <input type="text" id="bio" required />
+
+      <label for="skill">Skill:</label>
+      <input type="text" id="skill" required />
+
+      <label for="link">GitHub/LinkedIn:</label>
+      <input type="url" id="link" placeholder="https://..." required />
+
+      <button type="submit">Save Profile</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('profileForm').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const bio = document.getElementById('bio').value.trim();
+      const skill = document.getElementById('skill').value.trim();
+      const link = document.getElementById('link').value.trim();
+
+      if (!(bio && skill && link)) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      const profile = { bio, skill, link };
+
+      try {
+        const res = await fetch('http://localhost:4000/profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile)
+        });
+
+       if (res.ok) {
+  console.log("Profile saved!");
+
+  // ✅ Set profile completed flag for this user
+  const userId = localStorage.getItem("loggedInSetId");
+  if (userId) {
+    localStorage.setItem(`profileCompleted_${userId}`, "true");
+  }
+
+  // ✅ Redirect to postSharing.html
+  window.location.href = "postSharing.html";
+}
+
+ else {
+          alert('Error saving profile. Try again.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server error. Is JSON Server running?');
+      }
+    });
+  </script>
+</body>
+
+</html>

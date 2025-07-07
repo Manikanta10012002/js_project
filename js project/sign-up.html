@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign-Up Page</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-image: url("https://img.freepik.com/free-vector/gradient-abstract-wireframe-background_23-2149009903.jpg");
+      background-size: cover;
+      background-position: center;
+      font-family: Arial, sans-serif;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .main-container {
+      background-color: rgba(0, 0, 0, 0.7);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      font-size: 14px;
+      margin-bottom: 30px;
+      color: #ddd;
+    }
+
+    .input-field {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .input-field input {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      background-color: #f0f0f0;
+      color: #000;
+      font-size: 14px;
+    }
+
+    .input-field button {
+      padding: 12px;
+      background-color: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .input-field button:hover {
+      background-color: #e0e0e0;
+    }
+
+    .term,
+    .already-login,
+    .footer {
+      font-size: 13px;
+      margin-top: 20px;
+      color: #ccc;
+    }
+
+    .already-login a {
+      color: #87cefa;
+      text-decoration: underline;
+    }
+
+    .footer pre {
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #bbb;
+    }
+
+    @media (max-width: 480px) {
+      .main-container {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main-container">
+    <h1>Sign-Up</h1>
+    <p class="description">Once you sign up, your personal feed will be ready to explore.</p>
+
+    <div class="input-field">
+      <input type="email" placeholder="Email" id="email" required />
+      <input type="password" placeholder="Password" id="password" required />
+      <input type="password" placeholder="Confirm Password" id="confirm-password" required />
+      <button type="button" id="sign-up">Sign Up</button>
+    </div>
+
+    <div class="term">
+      <p>By continuing, you agree to the Terms of Service and the Privacy Policy.</p>
+    </div>
+
+    <div class="already-login">
+      <p>Already using daily.dev? <a href="./login.html">Login</a></p>
+    </div>
+
+    <div class="footer">
+      <pre>© 2025 Daily Dev Ltd.  Guidelines  Explore  Tags  Sources  Squads Leaderboard</pre>
+    </div>
+  </div>
+  <script type="module" src="./firebase.js"></script>
+
+  <script>
+    // function submitData() {
+    //   const email = document.getElementById("email").value.trim();
+    //   const password = document.getElementById("password").value.trim();
+    //   const confirmPassword = document.getElementById("confirm-password").value.trim();
+
+    //   if (!email || !password || !confirmPassword) {
+    //     alert("Please fill all fields.");
+    //     return;
+    //   }
+
+    //   if (password !== confirmPassword) {
+    //     alert("Passwords do not match.");
+    //     return;
+    //   }
+
+    //   // Check if user already exists in db.json
+    //   fetch(`http://localhost:4000/users?email=${encodeURIComponent(email)}`)
+    //     .then(res => res.json())
+    //     .then(users => {
+    //       if (users.length > 0) {
+    //         alert("Email already registered.");
+    //       } else {
+    //         // Add new user
+    //         fetch("http://localhost:4000/users", {
+    //           method: "POST",
+    //           headers: {
+    //             "Content-Type": "application/json"
+    //           },
+    //           body: JSON.stringify({ email, password })
+    //         })
+    //           .then(res => res.json())
+    //           .then(() => {
+    //             alert("Signup successful!");
+    //             window.location.href = "login.html";
+    //           })
+    //           .catch(() => alert("Error during signup. Try again."));
+    //       }
+    //     })
+    //     .catch(() => alert("Server error. Make sure JSON Server is running."));
+    
+  // </script>
+</body>
+
+</html>

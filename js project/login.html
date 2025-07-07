@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0d1117;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+      padding: 20px;
+    }
+    .card {
+      background-color: #161b22;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .card img {
+      width: 120px;
+      margin-bottom: 20px;
+    }
+    .card h1 {
+      margin-bottom: 25px;
+      color: #f0f6fc;
+    }
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    .forgot-password {
+      font-size: 13px;
+      color: #c9d1d9;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 20px;
+      text-align: right;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background-color: #f0f6fc;
+      color: #0d1117;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-login:hover {
+      background-color: #dbe2ea;
+    }
+    .separator {
+      border-top: 1px solid #30363d;
+      margin: 30px 0;
+      opacity: 0.5;
+    }
+    .signup-text {
+      font-size: 13px;
+      color: #c9d1d9;
+    }
+    .signup-text a {
+      color: #58a6ff;
+      text-decoration: none;
+      margin-left: 5px;
+    }
+    @media (max-width: 480px) {
+      .card {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="./Screenshot 2025-04-10 113812.png" alt="Logo">
+    <h1>Log In</h1>
+    <form id="login-form" >
+      <div class="input-group">
+        <input type="email" id="lemail" placeholder="Email" required />
+      </div>
+      <div class="input-group">
+        <input type="password" id="lpassword" placeholder="Password" required />
+      </div>
+      <a href="./forgot.html" class="forgot-password">Forgot password?</a>
+      <button type="submit" class="btn-login" id="sign-in">Log In</button>
+    </form>
+    <div class="separator"></div>
+    <p class="signup-text">
+      Not a member yet?
+      <a href="./sign-up.html">Sign up</a>
+    </p>
+  </div>
+  <script type="module" src="firebase.js"></script>
+
+  <!-- <script>
+    function login(event) {
+      event.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      fetch(`http://localhost:4000/users?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then(response => response.json())
+        .then(users => {
+          if (users.length > 0) {
+            alert("Login successful!");
+            localStorage.setItem("currentUser", JSON.stringify(users[0])); // store logged-in user
+            window.location.href = "profileMangement.html";
+          } else {
+            alert("Invalid email or password.");
+          }
+        })
+        .catch(error => {
+          console.error("Error during login:", error);
+          alert("Something went wrong. Please try again.");
+        });
+    }
+  </script> -->
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dev Community App</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f2f5; padding: 20px; }
+    .card-img-top { width: 100%; height: 30vh; object-fit: cover; }
+    .modal-img { width: 100%; object-fit: contain; max-height: 60vh; }
+    .modal-body { max-height: 70vh; overflow-y: auto; }
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mb-4">Dev Community</h1>
+    <button id="logoutBtn" class="btn btn-danger logout-btn">Logout</button>
+
+    <input id="search" type="text" class="form-control mb-4" placeholder="🔍 Search posts…" />
+
+    <form id="postForm" class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <input id="title" class="form-control mb-3" placeholder="Post Title" required />
+        <textarea id="content" class="form-control mb-3" rows="3" placeholder="Write your post…" required></textarea>
+        <label for="imageUpload">Upload Image (optional):</label>
+        <input type="file" id="imageUpload" class="form-control mb-3" accept="image/*" />
+        <label for="imageUrl">OR Paste Image URL (optional):</label>
+        <input type="url" id="imageUrl" class="form-control mb-3" placeholder="https://example.com/image.jpg" />
+        <button type="submit" class="btn btn-primary">Post</button>
+      </div>
+    </form>
+
+    <div id="postList" class="row gy-4"></div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="modalTitle" class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <img id="modalImage" class="modal-img mb-3" alt="Post image" />
+          <p id="modalContent"></p>
+          <div id="modalLikes" class="mb-2"></div>
+          <div id="modalComments" class="mb-3"></div>
+          <div class="input-group mb-3">
+            <input id="modalCommentInput" class="form-control" placeholder="Add comment…" />
+            <button type="button" id="modalCommentBtn" class="btn btn-success">Comment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = 'http://localhost:4000/posts';
+const bsModal = new bootstrap.Modal(document.getElementById('viewModal'));
+
+let posts = [], imageData = '', currentPostId = null;
+
+const form = document.getElementById('postForm');
+const titleEl = document.getElementById('title');
+const contentEl = document.getElementById('content');
+const imageUpload = document.getElementById('imageUpload');
+const imageUrlEl = document.getElementById('imageUrl');
+const postList = document.getElementById('postList');
+const searchEl = document.getElementById('search');
+const modalTitle = document.getElementById('modalTitle');
+const modalImage = document.getElementById('modalImage');
+const modalContent = document.getElementById('modalContent');
+const modalLikes = document.getElementById('modalLikes');
+const modalComments = document.getElementById('modalComments');
+const modalCommentInput = document.getElementById('modalCommentInput');
+const modalCommentBtn = document.getElementById('modalCommentBtn');
+
+imageUpload.addEventListener('change', () => {
+  const file = imageUpload.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      imageData = reader.result;
+      imageUpload.dataset.loaded = "true";
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = titleEl.value.trim();
+  const content = contentEl.value.trim();
+  const isEdit = form.dataset.editId;
+  let postData;
+
+  if (isEdit) {
+    const old = posts.find(p => p.id == isEdit);
+    postData = {
+      title,
+      content,
+      image: imageUpload.dataset.loaded ? imageData : old.image,
+      likes: old.likes,
+      comments: old.comments,
+      userId: old.userId
+    };
+    await fetch(`${API}/${isEdit}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(postData)
+    });
+    delete form.dataset.editId;
+  } else {
+    postData = {
+      title,
+      content,
+      image: imageUpload.dataset.loaded === "true" ? imageData : imageUrlEl.value.trim() || '',
+      likes: 0,
+      comments: [],
+      userId: localStorage.getItem("loggedInSetId")
+    };
+    await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(postData)
+    });
+  }
+
+  form.reset();
+  imageData = '';
+  imageUpload.dataset.loaded = "";
+  imageUpload.value = '';
+  imageUrlEl.value = '';
+  fetchPosts();
+});
+
+async function fetchPosts() {
+  const res = await fetch(API);
+  posts = await res.json();
+  render();
+}
+
+function render() {
+  const loggedInUserId = localStorage.getItem("loggedInSetId");
+  const q = searchEl.value.trim().toLowerCase();
+  postList.innerHTML = '';
+
+  posts.forEach(p => {
+    if (!p.title.toLowerCase().includes(q) && !p.content.toLowerCase().includes(q)) return;
+    const div = document.createElement('div');
+    div.className = 'col-12 col-md-6';
+    div.innerHTML = `
+      <div class="card h-100 shadow-sm">
+        ${p.image ? `<img src="${p.image}" class="card-img-top" alt="Post image">` : ''}
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">${p.title}</h5>
+          <p class="card-text text-truncate">${p.content}</p>
+          <div class="mt-auto d-flex gap-2 flex-wrap">
+            <span>👍 ${p.likes}</span>
+            <button class="btn btn-sm btn-outline-primary btn-like">Like</button>
+            <button class="btn btn-sm btn-outline-info btn-view">View</button>
+            ${loggedInUserId === p.userId ? `
+              <button class="btn btn-sm btn-outline-secondary btn-edit">Edit</button>
+              <button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>
+            ` : ''}
+            <button class="btn btn-sm btn-outline-danger btn-comment">Comment</button>
+          </div>
+          <div class="comment-box mt-2" style="display: none;">
+            <input type="text" class="form-control mb-2 comment-input" placeholder="Write a comment..." />
+            <button class="btn btn-sm btn-success submit-comment">Submit</button>
+          </div>
+        </div>
+      </div>`;
+
+    postList.appendChild(div);
+
+    div.querySelector('.btn-like').addEventListener('click', () => likePost(p.id));
+    div.querySelector('.btn-view').addEventListener('click', () => viewPost(p.id));
+    if (loggedInUserId === p.userId) {
+      div.querySelector('.btn-edit').addEventListener('click', () => editPost(p.id));
+      div.querySelector('.btn-delete').addEventListener('click', () => deletePost(p.id));
+    }
+    const commentBtn = div.querySelector('.btn-comment');
+    const commentBox = div.querySelector('.comment-box');
+    commentBtn.addEventListener('click', () => {
+      commentBox.style.display = commentBox.style.display === 'none' ? 'block' : 'none';
+    });
+
+    const submitCommentBtn = div.querySelector('.submit-comment');
+    const commentInput = div.querySelector('.comment-input');
+    submitCommentBtn.addEventListener('click', async () => {
+      const text = commentInput.value.trim();
+      if (!text) return;
+      const post = posts.find(post => post.id === p.id);
+      post.comments.push({ text, likes: 0 });
+      await fetch(`${API}/${post.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post)
+      });
+      commentInput.value = '';
+      commentBox.style.display = 'none';
+      fetchPosts();
+    });
+  });
+}
+
+function likePost(id) {
+  const post = posts.find(p => p.id === id);
+  fetch(`${API}/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ likes: post.likes + 1 })
+  }).then(() => {
+    fetchPosts();
+    if (currentPostId === id) viewPost(id);
+  });
+}
+
+function editPost(id) {
+  const post = posts.find(p => p.id === id);
+  titleEl.value = post.title;
+  contentEl.value = post.content;
+  imageData = post.image;
+  form.dataset.editId = id;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deletePost(id) {
+  const post = posts.find(p => p.id === id);
+  const loggedInUserId = localStorage.getItem("loggedInSetId");
+  if (post.userId !== loggedInUserId) {
+    alert("You can only delete your own posts!");
+    return;
+  }
+  fetch(`${API}/${id}`, { method: 'DELETE' }).then(() => fetchPosts());
+}
+
+function viewPost(id) {
+  const post = posts.find(p => p.id === id);
+  currentPostId = id;
+  modalTitle.textContent = post.title;
+  modalContent.textContent = post.content;
+  modalImage.src = post.image || '';
+  modalImage.style.display = post.image ? 'block' : 'none';
+  modalLikes.innerHTML = `👍 ${post.likes} <button class="btn btn-sm btn-outline-primary ms-2" onclick="likePost(${id})">Like</button>`;
+  modalComments.innerHTML = '';
+  post.comments.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'border rounded p-2 my-2';
+    div.innerHTML = `
+      <p>${c.text}</p>
+      <small class="text-muted">
+        ❤️ ${c.likes}
+        <button class="btn btn-sm btn-link" onclick="likeComment(${i})">Like</button>
+        <button class="btn btn-sm btn-link text-danger" onclick="deleteComment(${i})">Delete</button>
+      </small>`;
+    modalComments.appendChild(div);
+  });
+  modalCommentInput.value = '';
+  bsModal.show();
+}
+
+modalCommentBtn.addEventListener('click', async () => {
+  const text = modalCommentInput.value.trim();
+  if (!text || !currentPostId) return;
+  const post = posts.find(p => p.id === currentPostId);
+  post.comments.push({ text, likes: 0 });
+  await fetch(`${API}/${post.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(post)
+  });
+  fetchPosts();
+  viewPost(post.id);
+});
+
+function likeComment(i) {
+  const post = posts.find(p => p.id === currentPostId);
+  post.comments[i].likes++;
+  fetch(`${API}/${post.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(post)
+  }).then(() => {
+    fetchPosts();
+    viewPost(post.id);
+  });
+}
+
+function deleteComment(i) {
+  const post = posts.find(p => p.id === currentPostId);
+  post.comments.splice(i, 1);
+  fetch(`${API}/${post.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(post)
+  }).then(() => {
+    fetchPosts();
+    viewPost(post.id);
+  });
+}
+
+window.likePost = likePost;
+window.viewPost = viewPost;
+window.editPost = editPost;
+window.deletePost = deletePost;
+window.likeComment = likeComment;
+window.deleteComment = deleteComment;
+
+searchEl.addEventListener('input', render);
+document.addEventListener('DOMContentLoaded', fetchPosts);
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem("loggedInSetId");
+  window.location.href = "index.html";
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dev Community App</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f2f5; padding: 20px; }
+    .card-img-top { width: 100%; height: 30vh; object-fit: cover; }
+    .modal-img { width: 100%; height: auto; object-fit: contain; max-height: 80vh; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mb-4">Dev Community</h1>
+
+    <input id="search" type="text" class="form-control mb-4" placeholder="🔍 Search posts…" />
+
+    <form id="postForm" class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <input id="title" class="form-control mb-3" placeholder="Post Title" required>
+        <textarea id="content" class="form-control mb-3" rows="3" placeholder="Write your post…" required></textarea>
+        <input type="file" id="imageUpload" class="form-control mb-3" accept="image/*">
+        <button type="submit" class="btn btn-primary">Post</button>
+      </div>
+    </form>
+
+    <div id="postList" class="row gy-4"></div>
+  </div>
+
+  <!-- View Post Modal -->
+  <div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="modalTitle" class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <img id="modalImage" class="modal-img mb-3" alt="Post Image">
+          <p id="modalContent"></p>
+          <div id="modalLikes" class="mb-3"></div>
+          <div id="modalComments" class="mb-3"></div>
+          <div class="input-group mb-3">
+            <input id="modalCommentInput" class="form-control" placeholder="Add comment…">
+            <button id="modalCommentBtn" class="btn btn-success">Comment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const searchEl = document.getElementById('search'),
+          form = document.getElementById('postForm'),
+          titleEl = document.getElementById('title'),
+          contentEl = document.getElementById('content'),
+          imgUpload = document.getElementById('imageUpload'),
+          postList = document.getElementById('postList'),
+          viewModalEl = document.getElementById('viewModal'),
+          modalTitle = document.getElementById('modalTitle'),
+          modalImage = document.getElementById('modalImage'),
+          modalContent = document.getElementById('modalContent'),
+          modalLikes = document.getElementById('modalLikes'),
+          modalComments = document.getElementById('modalComments'),
+          modalCommentInput = document.getElementById('modalCommentInput'),
+          modalCommentBtn = document.getElementById('modalCommentBtn');
+
+    const bsModal = new bootstrap.Modal(viewModalEl);
+
+    let posts = JSON.parse(localStorage.getItem('posts') || '[]'),
+        editIdx = -1, imageData = '', currentViewIdx = -1;
+
+    imgUpload.addEventListener('change', () => {
+      const file = imgUpload.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => { imageData = reader.result.replace(/\s+/g, '') };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = titleEl.value.trim(), content = contentEl.value.trim();
+      if (!title || !content) return;
+      const obj = { title, content, image: imageData || '', likes: 0, comments: [] };
+      editIdx > -1 ? (posts[editIdx] = { ...posts[editIdx], ...obj }, editIdx = -1) : posts.push(obj);
+      imageData = ''; form.reset(); saveAndRender();
+    });
+
+    searchEl.addEventListener('input', render);
+
+    function saveAndRender() {
+      localStorage.setItem('posts', JSON.stringify(posts));
+      render();
+    }
+
+    function render() {
+      const q = searchEl.value.trim().toLowerCase();
+      postList.innerHTML = '';
+
+      posts.forEach((p, i) => {
+        const visible = !q ||
+          p.title.toLowerCase().includes(q) ||
+          p.content.toLowerCase().includes(q) ||
+          p.comments.some(c => c.text.toLowerCase().includes(q));
+        if (!visible) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'col-12 col-md-6';
+        wrap.innerHTML = `
+          <div class="card h-100 shadow-sm">
+            ${p.image ? `<img src="${p.image}" class="card-img-top" alt="Post Image">` : ''}
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${p.title}</h5>
+              <p class="card-text text-truncate">${p.content}</p>
+              <div class="mt-auto d-flex gap-2 flex-wrap">
+                <span class="align-self-center">👍 ${p.likes}</span>
+                <button class="btn btn-sm btn-outline-primary" onclick="likePost(${i})">Like</button>
+                <button class="btn btn-sm btn-outline-info" onclick="viewAndFocus(${i})">View</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="editPost(${i})">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deletePost(${i})">Delete</button>
+                <button class="btn btn-sm btn-outline-success" onclick="viewAndFocus(${i}, true)">Comment</button>
+              </div>
+            </div>
+          </div>`;
+        postList.appendChild(wrap);
+      });
+    }
+
+    window.likePost = i => { posts[i].likes++; saveAndRender(); };
+    window.deletePost = i => { posts.splice(i, 1); saveAndRender(); };
+    window.editPost = i => {
+      editIdx = i;
+      titleEl.value = posts[i].title;
+      contentEl.value = posts[i].content;
+      imageData = posts[i].image || '';
+      form.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.viewAndFocus = (i, focusComment = false) => {
+      currentViewIdx = i;
+      const p = posts[i];
+      modalTitle.textContent = p.title;
+      modalContent.textContent = p.content;
+      modalImage.src = p.image || '';
+      modalImage.style.display = p.image ? 'block' : 'none';
+      modalLikes.innerHTML = `👍 ${p.likes} <button class="btn btn-sm btn-outline-primary ms-2" onclick="modalLikePost()">Like</button>`;
+      modalComments.innerHTML = '';
+      p.comments.forEach((c, ci) => {
+        const div = document.createElement('div');
+        div.className = 'border rounded p-2 my-2';
+        div.innerHTML = `
+          <p>${c.text}</p>
+          <small class="text-muted">
+            ❤️ ${c.likes}
+            <button class="btn btn-sm btn-link p-0" onclick="modalLikeComment(${ci})">Like</button>
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="modalDeleteComment(${ci})">Delete</button>
+          </small>`;
+        modalComments.appendChild(div);
+      });
+      modalCommentInput.value = '';
+      bsModal.show();
+      if (focusComment) {
+        setTimeout(() => modalCommentInput.focus(), 300);
+      }
+    }
+
+    window.modalLikePost = () => {
+      posts[currentViewIdx].likes++;
+      saveAndRender();
+      viewAndFocus(currentViewIdx);
+    };
+
+    modalCommentBtn.addEventListener('click', () => {
+      const txt = modalCommentInput.value.trim();
+      if (!txt) return;
+      posts[currentViewIdx].comments.push({ text: txt, likes: 0 });
+      saveAndRender();
+      viewAndFocus(currentViewIdx, true);
+    });
+
+    window.modalLikeComment = ci => {
+      posts[currentViewIdx].comments[ci].likes++;
+      saveAndRender();
+      viewAndFocus(currentViewIdx);
+    };
+
+    window.modalDeleteComment = ci => {
+      posts[currentViewIdx].comments.splice(ci, 1);
+      saveAndRender();
+      viewAndFocus(currentViewIdx);
+    };
+
+    document.addEventListener('DOMContentLoaded', render);
+  </script>
+</body>
+</html>

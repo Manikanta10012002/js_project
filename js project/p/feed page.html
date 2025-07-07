@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Feed Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    .feed { max-width: 700px; margin: auto; }
+    .post { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .post img { max-width: 100%; border-radius: 6px; margin-top: 10px; }
+    .actions button { margin-right: 10px; }
+    .comment { margin-left: 20px; background: #eee; padding: 6px; margin-top: 5px; border-radius: 6px; }
+    input[type="text"] { width: 100%; padding: 8px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="feed">
+  <h2>Feed Page (All Users' Posts)</h2>
+  <div id="feedPosts"></div>
+</div>
+
+<script>
+  const feedContainer = document.getElementById('feedPosts');
+
+  function renderFeed() {
+    const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+    feedContainer.innerHTML = '';
+
+    posts.reverse().forEach((post, index) => {
+      const postEl = document.createElement('div');
+      postEl.className = 'post';
+
+      postEl.innerHTML = `
+        <h3>${post.title}</h3>
+        <p><strong>@${post.user}</strong>: ${post.content}</p>
+        ${post.image ? `<img src="${post.image}" alt="Post Image">` : ''}
+        <p>👍 <span id="like-${index}">${post.likes}</span></p>
+        <div class="actions">
+          <button onclick="likePost(${index})">Like</button>
+          <button onclick="sharePost(${index})">Share</button>
+        </div>
+        <div id="comment-list-${index}">
+          ${post.comments.map(c => `<div class="comment"><strong>@${c.user}</strong>: ${c.text} ❤️ ${c.likes}</div>`).join('')}
+        </div>
+        <input type="text" id="comment-input-${index}" placeholder="Write a comment...">
+        <button onclick="addComment(${index})">Comment</button>
+      `;
+
+      feedContainer.appendChild(postEl);
+    });
+  }
+
+  function likePost(index) {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts[index].likes++;
+    localStorage.setItem('posts', JSON.stringify(posts));
+    renderFeed();
+  }
+
+  function addComment(index) {
+    const currentUser = localStorage.getItem('currentUser') || 'guest';
+    const input = document.getElementById(`comment-input-${index}`);
+    const commentText = input.value.trim();
+    if (!commentText) return;
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts[index].comments.push({ user: currentUser, text: commentText, likes: 0 });
+    localStorage.setItem('posts', JSON.stringify(posts));
+    input.value = '';
+    renderFeed();
+  }
+
+  function sharePost(index) {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    const shareText = `Check out this post by @${posts[index].user}: "${posts[index].title}" - ${posts[index].content}`;
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert("Post content copied to clipboard!");
+    });
+  }
+
+  window.onload = renderFeed;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>User Dashboard + Posts</title>
+  <style>
+    body { font-family: Arial; padding:20px; background:#f5f5f5; }
+    input, textarea { width:100%; padding:8px; margin:6px 0; box-sizing:border-box; }
+    button { padding:6px 12px; margin:5px 4px 10px 0; cursor:pointer; }
+    .box { background:#fff; padding:15px; border-radius:8px; margin-bottom:20px; box-shadow:0 0 5px #ccc; }
+    .post, .comment { border:1px solid #ccc; padding:10px; border-radius:5px; margin-top:10px; background:white; }
+    .comment { margin-left:20px; }
+    img { max-width:100%; margin-top:10px; border-radius:5px; }
+    .stats { display: flex; gap: 15px; font-weight: bold; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginView" class="box">
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Enter your username" />
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboardView" class="box hidden">
+  <h2 id="welcomeUser"></h2>
+  <div class="stats">
+    <div>Posts: <span id="userPostsCount">0</span></div>
+    <div>Likes: <span id="userLikesCount">0</span></div>
+    <div>Comments: <span id="userCommentsCount">0</span></div>
+  </div>
+  <button onclick="alert('Profile Settings (not implemented)')">Profile Settings</button>
+  <button onclick="alert('Notifications (not implemented)')">Notifications</button>
+  <h3>Your Posts</h3>
+  <ul id="userPostList"></ul>
+</div>
+
+<!-- Search -->
+<div class="box">
+  <h2>Search Posts</h2>
+  <input id="search" placeholder="Search by title, content, or comments">
+</div>
+
+<!-- Create/Edit Post -->
+<div class="box" id="postFormBox">
+  <h2 id="formHeading">Create Post</h2>
+  <form id="postForm">
+    <input id="title" placeholder="Title" required>
+    <textarea id="content" placeholder="Your post..." rows="4" required></textarea>
+    <input type="file" id="imageUpload" accept="image/*">
+    <button type="submit">Submit</button>
+  </form>
+</div>
+
+<!-- Posts List -->
+<div id="postList" class="box"></div>
+
+<script>
+  const loginView = document.getElementById('loginView');
+  const dashboardView = document.getElementById('dashboardView');
+  const welcomeUser = document.getElementById('welcomeUser');
+  const userPostsCount = document.getElementById('userPostsCount');
+  const userLikesCount = document.getElementById('userLikesCount');
+  const userCommentsCount = document.getElementById('userCommentsCount');
+  const userPostList = document.getElementById('userPostList');
+  const postForm = document.getElementById('postForm');
+  const postFormBox = document.getElementById('postFormBox');
+  const formHeading = document.getElementById('formHeading');
+  const titleEl = document.getElementById('title');
+  const contentEl = document.getElementById('content');
+  const imageUpload = document.getElementById('imageUpload');
+  const postList = document.getElementById('postList');
+  const searchEl = document.getElementById('search');
+
+  let currentUser = null;
+  let editIdx = -1;
+  let imageBase64 = "";
+
+  // Login
+  function login() {
+    const uname = document.getElementById('username').value.trim();
+    if (!uname) return alert("Enter a username");
+    currentUser = uname;
+    localStorage.setItem('currentUser', uname);
+    let users = JSON.parse(localStorage.getItem('users') || '[]');
+    if (!users.includes(uname)) {
+      users.push(uname);
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+    showDashboard();
+    render();
+  }
+
+  function showDashboard() {
+    loginView.classList.add('hidden');
+    dashboardView.classList.remove('hidden');
+    welcomeUser.textContent = `Welcome, ${currentUser}!`;
+    updateDashboard();
+  }
+
+  function updateDashboard() {
+    const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+    const myPosts = posts.filter(p => p.user === currentUser);
+    let likes = 0, comments = 0;
+    myPosts.forEach(p => {
+      likes += p.likes || 0;
+      comments += p.comments.length;
+    });
+    userPostsCount.textContent = myPosts.length;
+    userLikesCount.textContent = likes;
+    userCommentsCount.textContent = comments;
+    userPostList.innerHTML = myPosts.map(p => `<li>${p.title}</li>`).join('');
+  }
+
+  // Image to Base64
+  imageUpload.addEventListener('change', () => {
+    const file = imageUpload.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => imageBase64 = reader.result;
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Submit Post
+  postForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+    if (editIdx > -1) {
+      posts[editIdx].title = titleEl.value;
+      posts[editIdx].content = contentEl.value;
+      posts[editIdx].image = imageBase64;
+      editIdx = -1;
+      formHeading.innerText = 'Create Post';
+    } else {
+      posts.push({
+        user: currentUser,
+        title: titleEl.value,
+        content: contentEl.value,
+        image: imageBase64,
+        likes: 0,
+        comments: []
+      });
+    }
+    localStorage.setItem('posts', JSON.stringify(posts));
+    postForm.reset();
+    imageBase64 = "";
+    updateDashboard();
+    render();
+  });
+
+  searchEl.addEventListener('input', render);
+
+  function render() {
+    const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+    const q = searchEl.value.trim().toLowerCase();
+    postList.innerHTML = '';
+    posts.forEach((p, i) => {
+      const match = !q || p.title.toLowerCase().includes(q) ||
+        p.content.toLowerCase().includes(q) ||
+        p.comments.some(c => c.text.toLowerCase().includes(q));
+      const div = document.createElement('div');
+      div.className = 'post' + (match ? '' : ' hidden');
+      div.innerHTML = `
+        <h3>${p.title}</h3>
+        <p>${p.content}</p>
+        ${p.image ? `<img src="${p.image}" alt="Post Image">` : ''}
+        <div>👍 ${p.likes}</div>
+        <button onclick="likePost(${i})">Like</button>
+        ${p.user === currentUser ? `
+          <button onclick="editPost(${i})">Edit</button>
+          <button onclick="deletePost(${i})">Delete</button>` : ''}
+        <div id="comments-${i}"></div>
+        <input id="input-${i}" placeholder="Add comment">
+        <button onclick="addComment(${i})">Comment</button>
+      `;
+      postList.appendChild(div);
+      renderComments(p.comments, i);
+    });
+  }
+
+  function renderComments(comments, pi) {
+    const ctn = document.getElementById(`comments-${pi}`);
+    ctn.innerHTML = '';
+    comments.forEach((c, ci) => {
+      const cd = document.createElement('div');
+      cd.className = 'comment';
+      cd.innerHTML = `
+        <p>${c.text}</p>
+        <div>❤️ ${c.likes}</div>
+        <button onclick="likeComment(${pi},${ci})">Like</button>
+        ${c.user === currentUser ? `<button onclick="deleteComment(${pi},${ci})">Delete</button>` : ''}
+      `;
+      ctn.appendChild(cd);
+    });
+  }
+
+  window.likePost = i => {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts[i].likes++;
+    localStorage.setItem('posts', JSON.stringify(posts));
+    updateDashboard();
+    render();
+  };
+
+  window.editPost = i => {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    const p = posts[i];
+    titleEl.value = p.title;
+    contentEl.value = p.content;
+    imageBase64 = p.image || '';
+    editIdx = i;
+    formHeading.innerText = "Edit Post";
+    postFormBox.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  window.deletePost = i => {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts.splice(i, 1);
+    localStorage.setItem('posts', JSON.stringify(posts));
+    updateDashboard();
+    render();
+  };
+
+  window.addComment = pi => {
+    const input = document.getElementById(`input-${pi}`);
+    const text = input.value.trim();
+    if (!text) return;
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts[pi].comments.push({ user: currentUser, text, likes: 0 });
+    localStorage.setItem('posts', JSON.stringify(posts));
+    input.value = '';
+    updateDashboard();
+    render();
+  };
+
+  window.likeComment = (pi, ci) => {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts[pi].comments[ci].likes++;
+    localStorage.setItem('posts', JSON.stringify(posts));
+    render();
+  };
+
+  window.deleteComment = (pi, ci) => {
+    const posts = JSON.parse(localStorage.getItem('posts'));
+    posts[pi].comments.splice(ci, 1);
+    localStorage.setItem('posts', JSON.stringify(posts));
+    updateDashboard();
+    render();
+  };
+
+  // Auto-login if saved
+  window.onload = () => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      currentUser = savedUser;
+      showDashboard();
+      render();
+    }
+  };
+</script>
+</body>
+</html>

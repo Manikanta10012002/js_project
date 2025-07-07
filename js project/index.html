@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevConnect</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background-image: url('./6743d585994b21d03c988098_6743c57ed929978b6d4124d2-1732497690620.jpg');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      color: white;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .logo {
+      width: 180px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: orange;
+      margin-bottom: 15px;
+    }
+
+    h3 {
+      font-size: 16px;
+      color: #ddd;
+      margin-bottom: 30px;
+    }
+
+    .btn-custom {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 12px;
+      border-radius: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .btn-custom:hover {
+      background-color: #e2e2e2;
+    }
+
+    .text-small {
+      font-size: 12px;
+      color: #bbb;
+      margin-top: 15px;
+    }
+
+    .cookie-banner {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      max-width: 300px;
+      background-color: #1f1f2e;
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      font-family: sans-serif;
+      z-index: 9999;
+      display: none;
+    }
+
+    .cookie-banner.show {
+      display: block;
+    }
+
+    .cookie-banner p {
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .cookie-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .cookie-buttons button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .accept-btn {
+      background-color: white;
+      color: black;
+      font-weight: bold;
+    }
+
+    .customize-btn {
+      background-color: #2e2e3e;
+      color: white;
+    }
+
+    @media (max-width: 576px) {
+      .card-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card-container">
+    <img src="./Screenshot 2025-04-10 113812.png" alt="daily-dev" class="logo">
+    <h1>Where developers suffer together</h1>
+    <h3>
+      We know how hard it is to be a developer. It doesn't have to be.<br>
+      Personalized news feed, dev community, and search — much better than what's out there.
+    </h3>
+    <a href="./sign-up.html" class="btn btn-custom">Sign Up</a>
+    <p class="text-small">By continuing you agree to the Terms of Service and the Privacy Policy.</p>
+    <p class="text-small">Already have an account? <a href="./login.html" style="color: #87cefa;">Login</a></p>
+  </div>
+
+  <div id="cookie-banner" class="cookie-banner">
+    <p>
+      This site uses cookies to enhance your experience. By continuing, you agree to our use of cookies as outlined in our
+      <a href="#">Privacy Policy</a> and <a href="#">Terms of Service</a>.
+    </p>
+    <div class="cookie-buttons">
+      <button class="accept-btn" onclick="acceptCookies()">Accept all</button>
+      <button class="customize-btn" onclick="customizeCookies()">Customize</button>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+
+</html>
