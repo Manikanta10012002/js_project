@@ -64,7 +64,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-const API = 'https://mock-jxjp.onrender.com';
+const API = "https://mock-jxjp.onrender.com/posts";
 const bsModal = new bootstrap.Modal(document.getElementById('viewModal'));
 
 let posts = [], imageData = '', currentPostId = null;
@@ -101,10 +101,15 @@ form.addEventListener('submit', async e => {
   const title = titleEl.value.trim();
   const content = contentEl.value.trim();
   const isEdit = form.dataset.editId;
+  const userId = localStorage.getItem("loggedInSetId") || "guest";
   let postData;
 
   if (isEdit) {
     const old = posts.find(p => p.id == isEdit);
+    if (old.userId !== userId) {
+      alert("You can only edit your own posts!");
+      return;
+    }
     postData = {
       title,
       content,
@@ -126,7 +131,7 @@ form.addEventListener('submit', async e => {
       image: imageUpload.dataset.loaded === "true" ? imageData : imageUrlEl.value.trim() || '',
       likes: 0,
       comments: [],
-      userId: localStorage.getItem("loggedInSetId") || "guest"
+      userId
     };
     await fetch(API, {
       method: 'POST',
@@ -229,6 +234,11 @@ function likePost(id) {
 
 function editPost(id) {
   const post = posts.find(p => p.id === id);
+  const loggedInUserId = localStorage.getItem("loggedInSetId");
+  if (post.userId !== loggedInUserId) {
+    alert("You can only edit your own posts!");
+    return;
+  }
   titleEl.value = post.title;
   contentEl.value = post.content;
   imageData = post.image;
