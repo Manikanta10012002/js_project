@@ -41,6 +41,7 @@
       font-weight: bold;
       color: #333;
       margin-top: 15px;
+      display: block;
     }
 
     input {
@@ -95,7 +96,7 @@
   </div>
 
   <script>
-    document.getElementById('profileForm').addEventListener('submit', async e => {
+    document.getElementById('profileForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const bio = document.getElementById('bio').value.trim();
@@ -110,31 +111,27 @@
       const profile = { bio, skill, link };
 
       try {
-        const res = await fetch('http://localhost:4000/profiles', {
+        const res = await fetch('https://mock-jxjp.onrender.com', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(profile)
         });
 
-       if (res.ok) {
-  console.log("Profile saved!");
+        if (res.ok) {
+          console.log("Profile saved!");
 
-  // ✅ Set profile completed flag for this user
-  const userId = localStorage.getItem("loggedInSetId");
-  if (userId) {
-    localStorage.setItem(`profileCompleted_${userId}`, "true");
-  }
+          const userId = localStorage.getItem("loggedInSetId") || "defaultUser";
+          localStorage.setItem(`profileCompleted_${userId}`, "true");
 
-  // ✅ Redirect to postSharing.html
-  window.location.href = "postSharing.html";
-}
-
- else {
-          alert('Error saving profile. Try again.');
+          window.location.href = "postSharing.html"; // Make sure this file exists
+        } else {
+          alert('Error saving profile. Please try again.');
         }
-      } catch (err) {
-        console.error(err);
-        alert('Server error. Is JSON Server running?');
+      } catch (error) {
+        console.error("Fetch error:", error);
+        alert('Failed to connect to the server. Make sure JSON Server is running.');
       }
     });
   </script>
